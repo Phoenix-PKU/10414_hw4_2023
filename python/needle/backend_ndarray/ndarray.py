@@ -304,8 +304,10 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        if len(self._shape) != len(new_shape):
-            raise NotImplementedError()
+        length_gap = len(new_shape) - len(self._shape)
+        for _ in range(length_gap):
+            self._shape = (1,) + self._shape
+            self._strides = (0,) + self._strides
         new_strides = []
         for dim in range(len(new_shape)):
             if self._shape[dim] == new_shape[dim]:
@@ -537,12 +539,13 @@ class NDArray:
             def tile(a, tile):
                 return a.as_strided(
                     (a.shape[0] // tile, a.shape[1] // tile, tile, tile),
-                    (a.shape[1] * tile, tile, self.shape[1], 1),
+                    (a.shape[1] * tile, tile, a.shape[1], 1),
                 )
 
             t = self.device.__tile_size__
             a = tile(self.compact(), t).compact()
             b = tile(other.compact(), t).compact()
+            print(a.shape, b.shape)
             out = NDArray.make((a.shape[0], b.shape[1], t, t), device=self.device)
             self.device.matmul_tiled(a._handle, b._handle, out._handle, m, n, p)
 

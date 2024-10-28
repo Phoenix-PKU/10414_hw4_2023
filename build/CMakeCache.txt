@@ -527,6 +527,8 @@ _Python_INCLUDE_DIR:INTERNAL=/opt/anaconda3/envs/10414/include/python3.10
 //Python Properties
 _Python_INTERPRETER_PROPERTIES:INTERNAL=Python;3;10;14;64;;cpython-310-darwin;abi3;/opt/anaconda3/envs/10414/lib/python3.10;/opt/anaconda3/envs/10414/lib/python3.10;/opt/anaconda3/envs/10414/lib/python3.10/site-packages;/opt/anaconda3/envs/10414/lib/python3.10/site-packages
 _Python_INTERPRETER_SIGNATURE:INTERNAL=95ddf36c6f1825fce4afdb87176cadca
+//Interpreter reason failure
+_Python_Interpreter_REASON_FAILURE:INTERNAL=
 //Path to a library.
 _Python_LIBRARY_RELEASE:INTERNAL=/opt/anaconda3/envs/10414/lib/libpython3.10.dylib
 //NumPy reason failure
