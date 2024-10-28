@@ -10,12 +10,25 @@ from ..backend_selection import array_api, BACKEND
 class LogSoftmax(TensorOp):
     def compute(self, Z):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        max_z_full = array_api.broadcast_to(
+            array_api.max(Z, axis = 1, keepdims = True), Z.shape)
+        max_z = array_api.max(Z, axis = 1)
+        log_sum_exp = array_api.log(array_api.sum(array_api.exp(Z - max_z_full), \
+                        axis = 1)) + max_z
+        log_sum_exp = array_api.broadcast_to(log_sum_exp.reshape((Z.shape[0], 1)), \
+                        Z.shape)
+        return Z - log_sum_exp
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        Z = node.inputs[0]
+        max_z_full = array_api.broadcast_to(
+            array_api.max(Z.numpy(), axis = 1, keepdims = True), Z.shape)
+        sum_row_grad = summation(out_grad, axes = 1).reshape((Z.shape[0], 1))
+        sum_exp = summation(exp(Z - max_z_full), axes = 1).reshape((Z.shape[0], 1))
+        sum_matrix = (sum_row_grad / sum_exp).broadcast_to(Z.shape)
+        return out_grad - sum_matrix * exp(Z - max_z_full)
         ### END YOUR SOLUTION
 
 
@@ -29,12 +42,31 @@ class LogSumExp(TensorOp):
 
     def compute(self, Z):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
-        ### END YOUR SOLUTION
+        max_z_full = array_api.broadcast_to(
+            array_api.max(Z, axis = self.axes, keepdims = True), Z.shape)
+        max_z = array_api.max(Z, axis = self.axes)
+        return array_api.log(array_api.sum(array_api.exp(Z - max_z_full), \
+                        axis = self.axes)) + max_z
+        ### END YOUR SOLUTIONx
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        target_shape = node.inputs[0].shape
+        new_shape = list(target_shape)
+        axes = range(len(new_shape)) if self.axes is None else self.axes
+        for axis in sorted(axes):
+            new_shape[axis] = 1
+        new_shape = tuple(new_shape)
+
+        Z = node.inputs[0]
+        max_z_full = array_api.broadcast_to(
+            array_api.max(Z.numpy(), axis = self.axes, keepdims = True), Z.shape)
+
+        sum_exp = summation(exp(Z - max_z_full), axes = self.axes).\
+            reshape(new_shape).broadcast_to(target_shape)
+  
+        return out_grad.reshape(new_shape).broadcast_to(target_shape) \
+                    * exp(Z - max_z_full) / sum_exp
         ### END YOUR SOLUTION
 
 
