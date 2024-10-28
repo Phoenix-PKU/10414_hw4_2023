@@ -165,8 +165,10 @@ class Transpose(TensorOp):
         else:
             axis[self.axes[0]], axis[self.axes[1]] = \
                 axis[self.axes[1]], axis[self.axes[0]] 
-            
-        return array_api.transpose(a, axis)
+        if BACKEND == 'np':
+            return a.transpose(axis)
+        else:    
+            return a.permute(axis)
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
@@ -223,6 +225,8 @@ def broadcast_to(a, shape):
 
 class Summation(TensorOp):
     def __init__(self, axes: Optional[tuple] = None):
+        if isinstance(axes, int):
+            axes = (axes,)
         self.axes = axes
 
     def compute(self, a):
