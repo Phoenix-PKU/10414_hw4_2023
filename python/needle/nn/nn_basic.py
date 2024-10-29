@@ -138,7 +138,8 @@ class SoftmaxLoss(Module):
     def forward(self, logits: Tensor, y: Tensor):
         ### BEGIN YOUR SOLUTION
         one_hot_vec = ops.summation(
-            init.one_hot(logits.shape[-1], y) * logits, axes=(1, ))
+            init.one_hot(logits.shape[-1], y, \
+                device=logits.device, dtype=logits.dtype) * logits, axes=(1, ))
         return ops.summation(ops.logsumexp(logits, axes=(1, )) \
                 - one_hot_vec, axes=(0, )) / logits.shape[0]
         ### END YOUR SOLUTION
@@ -151,12 +152,14 @@ class BatchNorm1d(Module):
         self.eps = eps
         self.momentum = momentum
         ### BEGIN YOUR SOLUTION
-        self.running_mean = init.zeros(dim)
-        self.running_var = init.ones(dim)
+        self.running_mean = init.zeros(dim, device=device, dtype=dtype)
+        self.running_var = init.ones(dim, device=device, dtype=dtype)
         self.weight = Parameter(
-            init.ones(dim), device=device, dtype=dtype, requires_grad=True)  
+            init.ones(dim, device=device, dtype=dtype), 
+            device=device, dtype=dtype, requires_grad=True)  
         self.bias = Parameter(
-            init.zeros(dim), device=device, dtype=dtype, requires_grad=True)
+            init.zeros(dim, device=device, dtype=dtype), 
+            device=device, dtype=dtype, requires_grad=True)
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
@@ -189,9 +192,11 @@ class LayerNorm1d(Module):
         self.eps = eps
         ### BEGIN YOUR SOLUTION
         self.weight = Parameter(init.ones(
-            dim, device=device, dtype=dtype, requires_grad=True))
+            dim, device=device, dtype=dtype, requires_grad=True), 
+            device=device, dtype=dtype, requires_grad=True)
         self.bias = Parameter(init.zeros(
-            dim, device=device, dtype=dtype, requires_grad=True))
+            dim, device=device, dtype=dtype, requires_grad=True), 
+            device=device, dtype=dtype, requires_grad=True)
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
@@ -226,9 +231,11 @@ class LayerNorm1d(Module):
         self.eps = eps
         ### BEGIN YOUR SOLUTION
         self.weight = Parameter(init.ones(
-            dim, device=device, dtype=dtype, requires_grad=True))
+            dim, device=device, dtype=dtype, requires_grad=True), 
+            device=device, dtype=dtype, requires_grad=True)
         self.bias = Parameter(init.zeros(
-            dim, device=device, dtype=dtype, requires_grad=True))
+            dim, device=device, dtype=dtype, requires_grad=True), 
+            device=device, dtype=dtype, requires_grad=True)
         ### END YOUR SOLUTION
 
     def forward(self, x: Tensor) -> Tensor:
@@ -245,16 +252,19 @@ class LayerNorm1d(Module):
 
 
 class Dropout(Module):
-    def __init__(self, p=0.5):
+    def __init__(self, p=0.5, device=None, dtype="float32"):
         super().__init__()
         self.p = p
+        self.device = device
+        self.dtype = dtype
 
     def forward(self, x: Tensor) -> Tensor:
         ### BEGIN YOUR SOLUTION
         # for p = 1, randb will return a tensor of all True
         # that means no dropout
         # however, we want p = 1 to mean all dropout
-        zero_vector = init.randb(*x.shape, p = 1 - self.p)
+        zero_vector = init.randb(*x.shape, p = 1 - self.p, 
+                    device=self.device, dtype=self.dtype)
         if self.training:
             return x * zero_vector / (1 - self.p)
         else:

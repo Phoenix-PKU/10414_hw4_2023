@@ -5,7 +5,6 @@ import numpy as np
 from . import ndarray_backend_numpy
 from . import ndarray_backend_cpu
 
-
 # math.prod not in Python 3.7
 def prod(x):
     return reduce(operator.mul, x, 1)
@@ -528,9 +527,8 @@ class NDArray:
 
         assert self.ndim == 2 and other.ndim == 2
         assert self.shape[1] == other.shape[0]
-
+        
         m, n, p = self.shape[0], self.shape[1], other.shape[1]
-
         # if the matrix is aligned, use tiled matrix multiplication
         if hasattr(self.device, "matmul_tiled") and all(
             d % self.device.__tile_size__ == 0 for d in (m, n, p)
@@ -545,7 +543,6 @@ class NDArray:
             t = self.device.__tile_size__
             a = tile(self.compact(), t).compact()
             b = tile(other.compact(), t).compact()
-            print(a.shape, b.shape)
             out = NDArray.make((a.shape[0], b.shape[1], t, t), device=self.device)
             self.device.matmul_tiled(a._handle, b._handle, out._handle, m, n, p)
 

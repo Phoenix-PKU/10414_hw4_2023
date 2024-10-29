@@ -11,7 +11,7 @@ class LogSoftmax(TensorOp):
     def compute(self, Z):
         ### BEGIN YOUR SOLUTION
         max_z_full = array_api.broadcast_to(
-            Z.max(axis = 1, keepdims = True), Z.shape)
+            Z.cached_data.max(axis = 1, keepdims = True), Z.shape)
         max_z = max(Z, axis = 1)
         log_sum_exp = array_api.log(array_api.sum(array_api.exp(Z - max_z_full), \
                         axis = 1)) + max_z
@@ -60,7 +60,7 @@ class LogSumExp(TensorOp):
 
         Z = node.inputs[0]
         max_z_full = array_api.broadcast_to(
-            Z.numpy().max(axis = self.axes, keepdims = True), Z.shape)
+            Z.cached_data.max(axis = 1, keepdims = True), Z.shape)
 
         sum_exp = summation(exp(Z - max_z_full), axes = self.axes).\
             reshape(new_shape).broadcast_to(target_shape)

@@ -14,8 +14,8 @@ import numpy
 from ..backend_selection import array_api, BACKEND 
 from .ops_tuple import *
 
-# BACKEND = 'np'
-# import numpy as array_api
+#BACKEND = 'np'
+#import numpy as array_api
 
 class EWiseAdd(TensorOp):
     def compute(self, a: NDArray, b: NDArray):
@@ -126,7 +126,7 @@ class EWiseDiv(TensorOp):
         ### BEGIN YOUR SOLUTION
         lhs, rhs = node.inputs
         return out_grad / rhs.cached_data, \
-            -out_grad * lhs / array_api.power(rhs, 2)
+            -out_grad * lhs / rhs ** 2
         ### END YOUR SOLUTION
 
 
@@ -165,9 +165,9 @@ class Transpose(TensorOp):
         else:
             axis[self.axes[0]], axis[self.axes[1]] = \
                 axis[self.axes[1]], axis[self.axes[0]] 
-        if BACKEND == 'np':
+        if array_api is numpy:
             return a.transpose(axis)
-        else:    
+        else:  
             return a.permute(axis)
         ### END YOUR SOLUTION
 
@@ -187,7 +187,10 @@ class Reshape(TensorOp):
 
     def compute(self, a):
         ### BEGIN YOUR SOLUTION
-        return array_api.reshape(a, self.shape)
+        if array_api is numpy:
+            return array_api.reshape(a, self.shape)
+        else:
+            return a.compact().reshape(self.shape)
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
@@ -355,7 +358,10 @@ class ReLU(TensorOp):
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
         # assert out_grad.shape == node.cached_data.shape
-        return out_grad * array_api.greater(node.cached_data, 0)
+        if array_api is numpy:
+            return out_grad * array_api.greater(node.cached_data, 0)
+        else: 
+            return out_grad * (node.cached_data > 0)
         ### END YOUR SOLUTION
 
 

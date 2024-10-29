@@ -1,5 +1,6 @@
 """Core data structures."""
 import needle
+import needle.backend_numpy
 from .backend_numpy import Device, cpu, all_devices
 from typing import List, Optional, NamedTuple, Tuple, Union
 from collections import namedtuple
@@ -14,10 +15,7 @@ TENSOR_COUNTER = 0
 # NOTE: we will import numpy as the array_api
 # as the backend for our computations, this line will change in later homeworks
 
-import numpy as array_api
-NDArray = numpy.ndarray
-
-from .backend_selection import array_api, NDArray, default_device
+from .backend_selection import array_api, NDArray
 
 class Op:
     """Operator definition."""
@@ -229,6 +227,7 @@ class Tensor(Value):
     @staticmethod
     def _array_from_numpy(numpy_array, device, dtype):
         if array_api is numpy:
+            # assert device.__dict__ == {}
             return numpy.array(numpy_array, dtype=dtype)
         return array_api.array(numpy_array, device=device, dtype=dtype)
 

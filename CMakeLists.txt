@@ -16,7 +16,6 @@ execute_process(COMMAND python3 -m pybind11 --cmakedir
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 find_package(pybind11 PATHS ${__pybind_path})
 
-
 if(NOT MSVC)
   set(CMAKE_CXX_FLAGS "-std=c++11 -O2 -march=native ${CMAKE_CXX_FLAGS}")
   # set(CMAKE_CUDA_STANDARD 14)
