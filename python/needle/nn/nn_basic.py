@@ -168,13 +168,13 @@ class BatchNorm1d(Module):
         bias = self.bias.reshape((1, self.dim)).broadcast_to(x.shape)
         if self.training:
             e_x = ops.summation(x, axes = (0, )) / x.shape[0]
-            self.running_mean = (1 - self.momentum) * self.running_mean + \
-                self.momentum * e_x
+            self.running_mean = ((1 - self.momentum) * self.running_mean + \
+                self.momentum * e_x).detach()
             e_x = e_x.reshape((1, x.shape[1])).broadcast_to(x.shape)
 
             var_x = ops.summation((x - e_x) ** 2, axes = (0, )) / x.shape[0]
-            self.running_var = (1 - self.momentum) * self.running_var + \
-                self.momentum * var_x
+            self.running_var = ((1 - self.momentum) * self.running_var + \
+                self.momentum * var_x).detach()
             var_x = var_x.reshape((1, x.shape[1])).broadcast_to(x.shape)
             normed_x = (x - e_x) / (var_x + self.eps) ** 0.5
             return weight * normed_x + bias
