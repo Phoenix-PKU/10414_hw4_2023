@@ -8,6 +8,8 @@ import time
 import os
 
 device = ndl.cpu()
+# from needle.backend_selection import cpu, cpu_numpy
+# device = cpu() ## device = cpu_numpy()
 
 np.random.seed(0)
 

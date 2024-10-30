@@ -15,7 +15,7 @@ TENSOR_COUNTER = 0
 # NOTE: we will import numpy as the array_api
 # as the backend for our computations, this line will change in later homeworks
 
-from .backend_selection import array_api, NDArray
+from .backend_selection import array_api, NDArray, default_device
 
 class Op:
     """Operator definition."""
@@ -382,13 +382,12 @@ def compute_gradient_of_variables(output_tensor, out_grad):
     for node in reverse_topo_order:
         gradient = sum_node_list(node_to_output_grads_list[node])
         node.grad = gradient
-        for idx, input_node in enumerate(node.inputs):
+        if node.op is None:
+            continue
+        partial_adjoints = node.op.gradient_as_tuple(gradient, node)
+        for input_node, partial_adjoint in zip(node.inputs, partial_adjoints):
             if input_node not in node_to_output_grads_list:
                 node_to_output_grads_list[input_node] = []
-            op = node.op
-            partial_adjoint = op.gradient(gradient, node)[idx] \
-                if len(node.inputs) > 1 else op.gradient(gradient, node)
-
             node_to_output_grads_list[input_node].append(partial_adjoint)
     ### END YOUR SOLUTION
 

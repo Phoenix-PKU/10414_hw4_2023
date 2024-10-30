@@ -247,6 +247,7 @@ class NDArray:
 
         ### BEGIN YOUR SOLUTION
         if prod(new_shape) != prod(self._shape) or not self.is_compact(): 
+            print(new_shape, self._shape)
             raise ValueError()
         else:
             new_stride = self.compact_strides(new_shape)
@@ -385,6 +386,7 @@ class NDArray:
         new_shapes, new_strides, new_offset = [], [], self._offset
         for idx, s in enumerate(idxs):
             remain_shape = range(self._shape[idx])[s]
+            assert len(remain_shape) > 0, "Slice has negative size"
             new_shapes.append(len(remain_shape))
             old_stride = self._strides[idx]
             new_strides.append(old_stride * s.step)

@@ -371,12 +371,12 @@ def relu(a):
 class Tanh(TensorOp):
     def compute(self, a):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return array_api.tanh(a)
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return out_grad * 4 / ((exp(node.inputs[0]) + exp(-node.inputs[0])) ** 2)
         ### END YOUR SOLUTION
 
 
@@ -396,13 +396,26 @@ class Stack(TensorOp):
 
     def compute(self, args: TensorTuple) -> Tensor:
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        if array_api is numpy:
+            return array_api.stack(args, axis=self.axis)
+        else:
+            new_shape = list(args[0].shape)
+            new_shape.insert(self.axis, len(args))
+            device = args[0].device
+            # print(args[0].device, type(args[0].device))
+            # assert args[0].device == None
+            new_array = NDArray.make(shape = new_shape, device = device)
+            for i in range(len(args)):
+                slices = [slice(None)] * len(new_shape)
+                slices[self.axis] = i
+                new_array[tuple(slices)] = args[i]
+            return new_array
         ### END YOUR SOLUTION
 
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return split(out_grad, axis=self.axis)
         ### END YOUR SOLUTION
 
 
@@ -422,12 +435,24 @@ class Split(TensorTupleOp):
 
     def compute(self, A):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        if array_api is numpy:
+            return array_api.split(A, A.shape[self.axis], axis=self.axis)
+        else:
+            to_return = []
+            new_shape = list(A.shape)
+            new_shape.pop(self.axis)
+            new_shape = tuple(new_shape)
+            for i in range(A.shape[self.axis]):
+                slices = [slice(None)] * len(A.shape)
+                slices[self.axis] = i
+                slices = tuple(slices)
+                to_return.append(A[slices].compact().reshape(new_shape))
+            return to_return
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return Stack(self.axis)(out_grad)
         ### END YOUR SOLUTION
 
 
