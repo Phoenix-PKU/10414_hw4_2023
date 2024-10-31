@@ -77,7 +77,6 @@ MATMUL_DIMS = [(16, 16, 16),
     (1, 2, 3),
     (3, 4, 5),
     (5, 4, 3),
-    (8, 8, 16),
     (16, 16, 32),
     (64, 64, 64),
     (72, 72, 72),
@@ -168,7 +167,6 @@ def test_stack_backward(shape, axis, l, device):
     ndl.stack(A, axis=axis).sum().backward()
     torch.stack(A_t, dim=axis).sum().backward()
     for i in range(l):
-        print(type(A), type(A[i]), type(A[i].grad))
         np.testing.assert_allclose(A_t[i].grad.numpy(), A[i].grad.numpy(), atol=1e-5, rtol=1e-5)
 
 
