@@ -509,6 +509,44 @@ class NDArray:
         self.device.ewise_tanh(self.compact()._handle, out._handle)
         return out
 
+    def flip(self, axis=None):
+        if axis is None:
+            axis = tuple(range(self.ndim))
+        elif isinstance(axis, int):
+            axis = (axis,)
+        else:
+            axis = tuple(axis)
+        new_strides, new_offset = list(self.strides), 0
+        for a in axis:
+            new_strides[a] *= -1
+            new_offset += (self.shape[a] - 1) * self.strides[a]
+        return NDArray.make(shape=self.shape, strides=tuple(new_strides), 
+                    device=self.device, handle=self._handle, offset=new_offset).compact()
+
+    
+    def pad(self, pad_width):
+        new_shape, new_start_idx = [], []
+        for idx, pad in enumerate(pad_width):
+            new_shape.append(self.shape[idx] + pad[0] + pad[1])
+            new_start_idx.append(slice(pad[0], self.shape[idx] + pad[0]))
+        new_array = self.device.full(shape = tuple(new_shape), fill_value = 0)
+        new_array[tuple(new_start_idx)] = self
+        return new_array
+    
+    # This function may be not useful at all
+    def dilate(self, axes, dilation):
+        ### BEGIN YOUR SOLUTION
+        new_shape = list(self.shape)
+        for axis in axes:
+            new_shape[axis] *= 1 + dilation
+        new_array = self.device.full(shape = new_shape, fill_value = 0, dtype=self.dtype)
+        slices = [slice(None)] * len(new_shape)
+        for axis in axes:
+            slices[axis] = slice(None, None, dilation + 1)
+        slices = tuple(slices)
+        new_array[slices] = self
+        return new_array
+
     ### Matrix multiplication
     def __matmul__(self, other):
         """Matrix multplication of two arrays.  This requires that both arrays

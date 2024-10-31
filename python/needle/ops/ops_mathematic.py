@@ -180,6 +180,29 @@ class Transpose(TensorOp):
 def transpose(a, axes=None):
     return Transpose(axes)(a)
 
+class Permute(TensorOp):
+    def __init__(self, axes: tuple):
+        if isinstance(axes, int):
+            axes = (axes,)
+
+        self.axes = axes
+
+    def compute(self, a):
+        ### BEGIN YOUR SOLUTION
+        return a.permute(self.axes)
+        ### END YOUR SOLUTION
+
+    def gradient(self, out_grad, node):
+        ### BEGIN YOUR SOLUTION
+        reverse_axes = [0] * len(self.axes)
+        for (i, axis) in enumerate(self.axes):
+            reverse_axes[axis] = i
+        return permute(out_grad, axes=tuple(reverse_axes))
+        ### END YOUR SOLUTION
+
+def permute(a, axes):
+    return Permute(axes)(a)
+
 
 class Reshape(TensorOp):
     def __init__(self, shape):
@@ -466,12 +489,15 @@ class Flip(TensorOp):
 
     def compute(self, a):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        if array_api == numpy:
+            return array_api.flip(a, axis=self.axes)
+        else:
+            return a.flip(self.axes)
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return flip(out_grad, axes=self.axes)
         ### END YOUR SOLUTION
 
 
@@ -486,12 +512,24 @@ class Dilate(TensorOp):
 
     def compute(self, a):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        new_shape = list(a.shape)
+        for axis in self.axes:
+            new_shape[axis] *= 1 + self.dilation
+        new_array = array_api.full(new_shape, 0, dtype=a.dtype, device=a.device)
+        slices = [slice(None)] * len(new_shape)
+        for axis in self.axes:
+            slices[axis] = slice(None, None, self.dilation + 1)
+        slices = tuple(slices)
+        new_array[slices] = a
+        return new_array
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return Tensor(
+            array = undilate(out_grad, axes=self.axes, dilation=self.dilation), 
+            device = out_grad.device,
+        )
         ### END YOUR SOLUTION
 
 
@@ -506,12 +544,24 @@ class UnDilate(TensorOp):
 
     def compute(self, a):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        new_shape = list(a.shape)
+        for axis in self.axes:
+            new_shape[axis] //= (1 + self.dilation)
+        new_array = NDArray.make(shape = new_shape, device = a.device)
+        slices = [slice(None)] * len(a.shape)
+        for axis in self.axes:
+            slices[axis] = slice(None, None, self.dilation + 1)
+        slices = tuple(slices)
+        new_array = a[slices]
+        return new_array
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        return Tensor(
+            array=dilate(out_grad, axes=self.axes, dilation=self.dilation), 
+            device=out_grad.device,
+        )
         ### END YOUR SOLUTION
 
 
@@ -526,14 +576,51 @@ class Conv(TensorOp):
 
     def compute(self, A, B):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        padded_A = A.pad(((0, 0), (self.padding, self.padding), 
+                            (self.padding, self.padding), (0, 0)))
+        N,H,W,C_in = padded_A.shape
+        K,_,_,C_out = B.shape
+        Ns, Hs, Ws, Cs = padded_A.strides
+        
+        inner_dim = K * K * C_in
+        new_H = (H - K + 1) // self.stride
+        new_W = (W - K + 1) // self.stride
+        
+        new_A = NDArray.make(shape = (N, new_H, new_W, K, K, C_in),
+                        strides = (Ns, Hs * self.stride, Ws * self.stride, Hs, Ws, Cs), 
+                        device=padded_A.device, handle=padded_A._handle) \
+                        .compact().reshape((N * new_H * new_W ,inner_dim))
+        out = new_A @ B.compact().reshape((K * K * C_in, C_out))
+        return out.compact().reshape((N, new_H, new_W, C_out))
         ### END YOUR SOLUTION
 
     def gradient(self, out_grad, node):
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        X, W = node.inputs[0], node.inputs[1]
+        flipped_W = flip(W, axes=(0, 1))
+        permuted_W = transpose(flipped_W, axes=(2, 3))
+        print("stride", self.stride, "padding", self.padding)
+        print("flip_W", flipped_W.shape)
+        print("out_grad: ", out_grad.shape)
+        print("permuted_W", permuted_W.shape)
+        print("Desired_X_GRAD: ", X.shape)
+        X_grad = conv(dilate(out_grad, axes=(1, 2), dilation = self.stride - 1), 
+                      permuted_W, padding=W.shape[0] - 1 - self.padding)
+        print("X_grad: ", X_grad.shape)
+
+        premuted_X = permute(X, axes=(3, 1, 2, 0))
+        premuted_out_grad = permute(out_grad, (1, 2, 0, 3))
+        
+        print("premuted_X", premuted_X.shape)
+        print("premuted_out_grad", premuted_out_grad.shape)
+        print("Desired_W_GRAD: ", W.shape)
+        W_grad = conv(premuted_X, dilate(premuted_out_grad, axes=(0, 1), dilation=self.stride - 1),
+                 padding = self.padding).permute((1, 2, 0, 3))
+        print("W_grad: ", W_grad.shape)
+
+        return X_grad, W_grad
         ### END YOUR SOLUTION
 
 
-def conv(a, b, stride=1, padding=1):
+def conv(a, b, stride=1, padding=0):
     return Conv(stride, padding)(a, b)
