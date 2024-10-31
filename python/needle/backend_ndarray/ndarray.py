@@ -141,6 +141,7 @@ class NDArray:
         array._strides = NDArray.compact_strides(shape) if strides is None else strides
         array._offset = offset
         array._device = device if device is not None else default_device()
+        print(type(array.device))
         if handle is None:
             array._handle = array.device.Array(prod(shape))
         else:

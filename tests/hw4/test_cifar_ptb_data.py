@@ -36,8 +36,8 @@ BATCH_SIZES = [1, 15]
 @pytest.mark.parametrize("train", TRAIN)
 @pytest.mark.parametrize("device", _DEVICES, ids=["cpu", "cuda"])
 def test_cifar10_loader(batch_size, train, device):
-    cifar10_train_dataset = ndl.data.CIFAR10Dataset("data/cifar-10-batches-py", train=True)
-    train_loader = ndl.data.DataLoader(cifar10_train_dataset, batch_size)
+    cifar10_train_dataset = ndl.data.CIFAR10Dataset("data/cifar-10-batches-py", train=train)
+    train_loader = ndl.data.DataLoader(cifar10_train_dataset, batch_size, device=device)
     for (X, y) in train_loader:
         break
     assert isinstance(X.cached_data, nd.NDArray)
@@ -92,7 +92,7 @@ def submit_cifar10():
         dataset = ndl.data.CIFAR10Dataset("data/cifar-10-batches-py", train=train)
         mugrade_submit(len(dataset))
         for (device, batch_size) in itertools.product(devices, TEST_BATCH_SIZES):
-            loader = ndl.data.DataLoader(dataset, batch_size)
+            loader = ndl.data.DataLoader(dataset, batch_size, device=device)
             for (X, y) in loader:
                 break
             mugrade_submit(X.numpy()[0, :, :, :])

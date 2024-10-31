@@ -83,7 +83,6 @@ class DataLoader:
         for j in range(len(samples[0])):
             to_return.append(Tensor(
                 np.stack([samples[i][j] for i in range(len(samples))]), device=self.device))
-        # print(self.device)
         self.index += 1
         return to_return
         ### END YOUR SOLUTION
