@@ -62,7 +62,7 @@ class LogSumExp(TensorOp):
 
         Z = node.inputs[0]
         max_z_full = array_api.broadcast_to(
-            Z.cached_data.max(axis = 1, keepdims = True), Z.shape)
+            Z.cached_data.max(axis = self.axes, keepdims = True), Z.shape)
 
         sum_exp = summation(exp(Z - max_z_full), axes = self.axes).\
             reshape(new_shape).broadcast_to(target_shape)
