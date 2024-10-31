@@ -514,11 +514,17 @@ class Dilate(TensorOp):
         ### BEGIN YOUR SOLUTION
         new_shape = list(a.shape)
         for axis in self.axes:
-            new_shape[axis] *= 1 + self.dilation
+            if axis < len(a.shape):
+                new_shape[axis] *= 1 + self.dilation
+            else:
+                continue
         new_array = array_api.full(new_shape, 0, dtype=a.dtype, device=a.device)
         slices = [slice(None)] * len(new_shape)
         for axis in self.axes:
-            slices[axis] = slice(None, None, self.dilation + 1)
+            if axis < len(a.shape):
+                slices[axis] = slice(None, None, self.dilation + 1)
+            else:
+                continue
         slices = tuple(slices)
         new_array[slices] = a
         return new_array
@@ -546,10 +552,14 @@ class UnDilate(TensorOp):
         ### BEGIN YOUR SOLUTION
         new_shape = list(a.shape)
         for axis in self.axes:
+            if axis >= len(a.shape):
+                continue
             new_shape[axis] //= (1 + self.dilation)
         new_array = NDArray.make(shape = new_shape, device = a.device)
         slices = [slice(None)] * len(a.shape)
         for axis in self.axes:
+            if axis >= len(a.shape):
+                continue
             slices[axis] = slice(None, None, self.dilation + 1)
         slices = tuple(slices)
         new_array = a[slices]
