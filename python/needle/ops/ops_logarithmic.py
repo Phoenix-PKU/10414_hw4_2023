@@ -38,6 +38,8 @@ def logsoftmax(a):
 
 class LogSumExp(TensorOp):
     def __init__(self, axes: Optional[tuple] = None):
+        if isinstance(axes, int):
+            axes = (axes,)
         self.axes = axes
 
     def compute(self, Z):
